@@ -1,0 +1,93 @@
+import java.io.*;
+import java.util.*;
+import java.util.stream.*;
+import static java.util.stream.Collectors.toList;
+
+class Result {
+
+    /*
+     * Complete the 'extractErrorLogs' function below.
+     *
+     * The function is expected to return a 2D_STRING_ARRAY.
+     * The function accepts 2D_STRING_ARRAY logs as parameter.
+     */
+
+    public static List<List<String>> extractErrorLogs(List<List<String>> logs) {
+        // Filter logs to include only those with "ERROR" or "CRITICAL" status
+        List<List<String>> filteredLogs = logs.stream()
+            .filter(log -> log.get(2).equals("ERROR") || log.get(2).equals("CRITICAL"))
+            .collect(Collectors.toList());
+
+        // Sort the filtered logs by date and time
+        filteredLogs.sort((log1, log2) -> {
+            String[] date1Parts = log1.get(0).split("-");
+            String[] date2Parts = log2.get(0).split("-");
+            String[] time1Parts = log1.get(1).split(":");
+            String[] time2Parts = log2.get(1).split(":");
+
+            // Compare year
+            int yearComparison = Integer.compare(Integer.parseInt(date1Parts[2]), Integer.parseInt(date2Parts[2]));
+            if (yearComparison != 0) return yearComparison;
+
+            // Compare month
+            int monthComparison = Integer.compare(Integer.parseInt(date1Parts[1]), Integer.parseInt(date2Parts[1]));
+            if (monthComparison != 0) return monthComparison;
+
+            // Compare day
+            int dayComparison = Integer.compare(Integer.parseInt(date1Parts[0]), Integer.parseInt(date2Parts[0]));
+            if (dayComparison != 0) return dayComparison;
+
+            // Compare hour
+            int hourComparison = Integer.compare(Integer.parseInt(time1Parts[0]), Integer.parseInt(time2Parts[0]));
+            if (hourComparison != 0) return hourComparison;
+
+            // Compare minute
+            return Integer.compare(Integer.parseInt(time1Parts[1]), Integer.parseInt(time2Parts[1]));
+        });
+
+        return filteredLogs;
+    }
+}
+
+public class Solution {
+    public static void main(String[] args) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(System.getenv("OUTPUT_PATH")));
+
+        int logsRows = Integer.parseInt(bufferedReader.readLine().trim());
+        int logsColumns = Integer.parseInt(bufferedReader.readLine().trim());
+
+        List<List<String>> logs = new ArrayList<>();
+
+        IntStream.range(0, logsRows).forEach(i -> {
+            try {
+                logs.add(
+                    Stream.of(bufferedReader.readLine().replaceAll("\\s+$", "").split(" "))
+                        .collect(toList())
+                );
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        List<List<String>> result = Result.extractErrorLogs(logs);
+
+        result.stream()
+            .map(
+                r -> r.stream()
+                    .collect(joining(" "))
+            )
+            .map(r -> r + "\n")
+            .collect(toList())
+            .forEach(e -> {
+                try {
+                    bufferedWriter.write(e);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+
+        bufferedReader.close();
+        bufferedWriter.close();
+    }
+}
